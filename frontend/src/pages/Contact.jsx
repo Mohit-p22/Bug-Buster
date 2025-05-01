@@ -62,8 +62,8 @@ const Contact = () => {
       {/* Hero Section */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 2%)`,
-          color: 'white',
+          background: `linear-gradient(136deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 10%)`,
+          color: 'black',
           py: 8,
           mb: 8,
         }}

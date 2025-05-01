@@ -61,7 +61,7 @@ const CookiePolicy = () => {
     {
       icon: <Settings size={40} />,
       title: 'Customizable Settings',
-      description: 'Choose which non-essential cookies you want to accept or reject.',
+      description: 'Choose which non-essential cookies you want to accept and reject and.',
     },
     {
       icon: <Clock size={40} />,
@@ -75,8 +75,8 @@ const CookiePolicy = () => {
       {/* Hero Section */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 10%)`,
-          color: 'white',
+          background: `linear-gradient(136deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 10%)`,
+          color: 'black',
           py: 8,
           mb: 8,
         }}
