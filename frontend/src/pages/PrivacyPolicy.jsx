@@ -67,7 +67,7 @@ const PrivacyPolicy = () => {
       <Box
         sx={{
           background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 10%)`,
-          color: 'white',
+          color: 'black',
           py: 8,
           mb: 8,
         }}

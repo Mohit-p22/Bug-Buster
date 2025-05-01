@@ -146,7 +146,7 @@ const Profile = () => {
                 <Typography variant="subtitle2" color="text.secondary">Scan Limit</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography variant="body1">
-                    {profile.user.scanLimit} / 10  scans used
+                    {( 10 - profile.user.scanLimit)} / 10  scans remain
                   </Typography>
                   {/* {!profile.isPremium && profile.user.scansUsed >= profile.scanLimit && (
                   )} */}
@@ -188,33 +188,68 @@ const Profile = () => {
                   No scan history found
                 </Typography>
               ) : (
-                <Box sx={{ overflowX: 'auto'}}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
+                <Box sx={{ 
+                  overflowX: 'auto',
+                  overflowY: 'auto',
+                  maxHeight: '600px',
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                    height: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: '#f1f1f1',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: '#888',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb:hover': {
+                    background: '#555',
+                  },
+                }}>
+                  <table style={{ 
+                    width: '100%', 
+                    borderCollapse: 'collapse',
+                    minWidth: '700px',
+                  }}>
+                    <thead style={{ position: 'sticky', top: 0, background: 'white', color:'black',zIndex: 50 }}>
                       <tr>
-                        <th style={{ textAlign: 'left', padding: '10px' }}>ID</th>
-                        <th style={{ textAlign: 'left', padding: '10px' }}>URL</th>
-                        <th style={{ textAlign: 'left', padding: '10px' }}>Scan Type</th>
-                        <th style={{ textAlign: 'left', padding: '10px' }}>Date</th>
-                        <th style={{ textAlign: 'left', padding: '10px' }}>Bugs</th>
-                        <th style={{ textAlign: 'right', padding: '10px' }}>Actions</th>
+                        <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '40%' }}>URL</th>
+                        <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '15%' }}>Scan Type</th>
+                        <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '20%' }}>Date</th>
+                        <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '10%' }}>Bugs</th>
+                        <th style={{ textAlign: 'right', padding: '12px', borderBottom: '2px solid #eee', width: '15%' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {profile.history.map((scan) => (
-                        <tr key={scan.historyID}>
-                          <td style={{ padding: '10px' }}>{scan.historyID}</td>
-                          <td style={{ padding: '10px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <tr key={scan.historyID} style={{ 
+                          '&:hover': {
+                            backgroundColor: '#f5f5f5'
+                          }
+                        }}>
+                          <td style={{ 
+                            padding: '12px', 
+                            maxWidth: '400px',
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            borderBottom: '1px solid #eee'
+                          }}>
                             {scan.urlScanned}
                           </td>
-                          <td style={{ padding: '10px' }}>
-                             {scan.scanType}  
+                          <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
+                            <Badge
+                              color="primary"
+                              badgeContent={scan.scanType || 'UNKNOWN'}
+                            />
                           </td>
-                          <td style={{ padding: '10px' }}>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
                             {arrayToDateTime(scan?.timestamp)}
                           </td>
-                          <td style={{ padding: '10px' }}>{scan.bugFoundCount}</td>
-                          <td style={{ padding: '10px', textAlign: 'right' }}>
+                          <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>{scan.bugFoundCount}</td>
+                          <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #eee' }}>
                             <Button
                               variant="outlined"
                               size="small"

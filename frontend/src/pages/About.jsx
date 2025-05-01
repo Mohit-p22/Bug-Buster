@@ -57,16 +57,15 @@ const About = () => {
       <Box
         sx={{
           background: `linear-gradient(136deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 10%)`,
-          color: 'white',
-         
-          py: 12,
+          color: 'black',
+          py: 8,
           mb: 8,
         }}
       >
         <Container maxWidth="lg">
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={6}>
-              <Typography variant="h2" component="h1" gutterBottom>
+              <Typography variant="h2" component="h2" gutterBottom>
                 About BugBuster
               </Typography>
               <Typography variant="h5" sx={{ mb: 4 }}>

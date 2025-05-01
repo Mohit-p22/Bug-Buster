@@ -23,13 +23,15 @@ import Swal from 'sweetalert2';
 const Dashboard = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState({
-    username: '',
-    email: '',
-    isPremium: false,
-    scansUsed: 0,
-    scanLimit: 10  // Default limit
+    user: {
+      userId: null,
+      username: '',
+      email: '',
+      scanLimit: 0,
+    },
+    history: []
   });
-  const [history, setHistory] = useState([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
 
@@ -43,22 +45,11 @@ const Dashboard = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [profileData, historyData] = await Promise.all([
-          axios.get(`http://localhost:8080/api/user/profile`, { params: { email: userEmail } }),
-          axios.get(`http://localhost:8080/api/user/history`, { params: { email: userEmail } })
-        ]);
+        const response = await axios.get(`http://localhost:8080/api/user/profile`, { params: { email: userEmail } });
+        const { data } = response.data;
+        console.log("detail", data);
         
-        // Ensure profile data has all required fields
-        setProfile({
-          username: profileData.data?.username || 'User',
-          email: profileData.data?.email || userEmail,
-          isPremium: profileData.data?.isPremium || false,
-          scansUsed: profileData.data?.scansUsed || 0,
-          scanLimit: profileData.data?.scanLimit || 10
-        });
-
-        // Ensure history data is an array
-        setHistory(Array.isArray(historyData.data) ? historyData.data : []);
+        setProfile(data);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         Swal.fire({
@@ -73,7 +64,6 @@ const Dashboard = () => {
           timerProgressBar: true,
           showConfirmButton: false
         });
-        setHistory([]);  // Set empty array on error
       } finally {
         setIsLoading(false);
       }
@@ -82,19 +72,23 @@ const Dashboard = () => {
     fetchData();
   }, [navigate]);
 
-  const totalBugs = Array.isArray(history) ? history.reduce((acc, scan) => acc + (scan?.bugCount || 0), 0) : 0;
-  const averageBugsPerScan = Array.isArray(history) && history.length > 0 
-    ? Math.round((totalBugs / history.length) * 10) / 10 
+  const totalBugs = Array.isArray(profile.history) 
+    ? profile.history.reduce((acc, scan) => acc + (scan?.bugFoundCount || 0), 0) 
     : 0;
 
-  // Safe calculation of scan limit percentage
-  const scanLimitPercentage = profile.scanLimit > 0 
-    ? Math.min(Math.round((profile.scansUsed / profile.scanLimit) * 100), 100)
+  const averageBugsPerScan = Array.isArray(profile.history) && profile.history.length > 0 
+    ? Math.round((totalBugs / profile.history.length) * 10) / 10 
     : 0;
 
-  const formatDate = (dateString) => {
+  const scanLimitPercentage = profile.user.scanLimit > 0 
+    ?  ((10 - profile.user.scanLimit) * 10)
+    : 0;
+
+  const formatDate = (timestamp) => {
+    if (!timestamp || !Array.isArray(timestamp)) return 'Invalid Date';
     try {
-      return new Date(dateString).toLocaleDateString();
+      const [year, month, day, hour, minute, second] = timestamp;
+      return new Date(year, month - 1, day, hour, minute, second).toLocaleDateString();
     } catch (error) {
       return 'Invalid Date';
     }
@@ -115,7 +109,7 @@ const Dashboard = () => {
           Dashboard
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          Welcome back, {profile.username}. Here's an overview of your bug detection activity.
+          Welcome back, {profile.user.username}. Here's an overview of your bug detection activity.
         </Typography>
         <Button
           variant="contained"
@@ -131,10 +125,10 @@ const Dashboard = () => {
           <Card>
             <CardHeader
               title="Total Scans"
-              subheader={history.length > 0 ? `Last scan ${formatDate(history[0]?.createdAt)}` : "No scans yet"}
+              subheader={profile.history.length > 0 ? `Last scan ${formatDate(profile.history[0]?.timestamp)}` : "No scans yet"}
             />
             <CardContent>
-              <Typography variant="h3">{history.length}</Typography>
+              <Typography variant="h3">{profile.history.length}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -174,50 +168,80 @@ const Dashboard = () => {
             subheader="Your most recent website scans and their results"
           />
           <CardContent>
-            {!Array.isArray(history) || history.length === 0 ? (
+            {!Array.isArray(profile.history) || profile.history.length === 0 ? (
               <Typography align="center" color="text.secondary">
                 No scan history found
               </Typography>
             ) : (
-              <Box sx={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
+              <Box 
+                sx={{ 
+                  overflowX: 'auto',
+                  overflowY: 'auto',
+                  maxHeight: '400px', // Fixed height for scrolling
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                    height: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: '#f1f1f1',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: '#888',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb:hover': {
+                    background: '#555',
+                  },
+                }}
+              >
+                <table style={{ 
+                  width: '100%', 
+                  borderCollapse: 'collapse',
+                  minWidth: '800px', // Minimum width to ensure content visibility
+                }}>
+                  <thead style={{ position: 'sticky', top: 0,  background: 'white', color:'black',zIndex: 50  }}>
                     <tr>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>URL</th>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>Date</th>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>Status</th>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>Bugs</th>
-                      <th style={{ textAlign: 'right', padding: '8px' }}>Actions</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '35%' }}>URL</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '20%' }}>Date</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '15%' }}>Type</th>
+                      <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '15%' }}>Bugs</th>
+                      <th style={{ textAlign: 'right', padding: '12px', borderBottom: '2px solid #eee', width: '15%' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {history.map((scan) => (
-                      <tr key={scan?.id || Math.random()}>
-                        <td style={{ padding: '8px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {scan?.url || 'N/A'}
+                    {profile.history.map((scan) => (
+                      <tr key={scan?.historyID || Math.random()} style={{ 
+                        '&:hover': {
+                          backgroundColor: '#f5f5f5'
+                        }
+                      }}>
+                        <td style={{ 
+                          padding: '12px', 
+                          maxWidth: '300px', 
+                          overflow: 'hidden', 
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          borderBottom: '1px solid #eee'
+                        }}>
+                          {scan?.urlScanned || 'N/A'}
                         </td>
-                        <td style={{ padding: '8px' }}>
-                          {formatDate(scan?.createdAt)}
+                        <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
+                          {formatDate(scan?.timestamp)}
                         </td>
-                        <td style={{ padding: '8px' }}>
+                        <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
                           <Badge
-                            color={
-                              scan?.status === "COMPLETED"
-                                ? "success"
-                                : scan?.status === "FAILED"
-                                  ? "error"
-                                  : "warning"
-                            }
-                            badgeContent={scan?.status || 'UNKNOWN'}
+                            color="primary"
+                            badgeContent={scan?.scanType || 'UNKNOWN'}
                           />
                         </td>
-                        <td style={{ padding: '8px' }}>{scan?.bugCount || 0}</td>
-                        <td style={{ padding: '8px', textAlign: 'right' }}>
+                        <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>{scan?.bugFoundCount || 0}</td>
+                        <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #eee' }}>
                           <Button
                             variant="outlined"
                             size="small"
-                            onClick={() => navigate(`/view-report/${scan?.id}`)}
-                            disabled={!scan?.id}
+                            onClick={() => navigate(`/view-report/${scan?.historyID}`)}
+                            disabled={!scan?.historyID}
                           >
                             View Report
                           </Button>
@@ -288,7 +312,7 @@ const Dashboard = () => {
           <Box sx={{ mb: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
               <Typography variant="body2">
-                {profile.scansUsed} / {profile.scanLimit} scans used
+              {( 10 - profile.user.scanLimit )} / 10 scans used
               </Typography>
               <Typography variant="body2">
                 {scanLimitPercentage}%
@@ -300,14 +324,6 @@ const Dashboard = () => {
               sx={{ height: 10, borderRadius: 5 }}
             />
           </Box>
-          {!profile.isPremium && (
-            <Button
-              variant="contained"
-              onClick={() => navigate('/payment')}
-            >
-              Upgrade to Premium
-            </Button>
-          )}
         </CardContent>
       </Card>
     </Container>
