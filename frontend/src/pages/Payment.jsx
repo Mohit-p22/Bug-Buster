@@ -6,54 +6,39 @@ import {
   Grid,
   Card,
   CardContent,
-  TextField,
   Button,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-  FormControl,
-  FormLabel,
   useTheme,
-  Alert,
-  Divider,
   List,
+  Stack,
 } from '@mui/material';
-import { CreditCard, Lock, Shield } from 'lucide-react';
+import { Shield, Check } from 'lucide-react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const Payment = () => {
   const theme = useTheme();
-  const [formData, setFormData] = useState({
-    cardNumber: '',
-    cardName: '',
-    expiryDate: '',
-    cvv: '',
-    plan: 'pro',
-  });
-  const [status, setStatus] = useState({ type: '', message: '' });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post('http://localhost:8080/api/payment', formData);
-      setStatus({ type: 'success', message: 'Payment successful! Your account has been upgraded.' });
-    } catch (error) {
-      setStatus({ type: 'error', message: 'Payment failed. Please try again.' });
-    }
-  };
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   const plans = [
     {
-      id: 'pro',
-      name: 'Pro Plan',
-      price: '$29',
+      id: 'basic',
+      name: 'Basic Plan',
+      price: '99',
       period: 'per month',
       features: [
-        '50 scans per month',
+        '5 scans',
+        'Basic bug detection',
+        'Email support',
+        'Basic reports',
+      ],
+    },
+    {
+      id: 'pro',
+      name: 'Pro Plan',
+      price: '499',
+      period: 'per month',
+      features: [
+        '50 scans',
         'Advanced bug detection',
         'Priority support',
         'Detailed reports',
@@ -64,7 +49,7 @@ const Payment = () => {
     {
       id: 'enterprise',
       name: 'Enterprise Plan',
-      price: '$99',
+      price: '999',
       period: 'per month',
       features: [
         'Unlimited scans',
@@ -74,169 +59,171 @@ const Payment = () => {
         'API access',
         'Team collaboration',
         'Custom integrations',
-        'Dedicated account manager',
+        'Dedicated manager',
       ],
     },
   ];
 
+  const handleCheckout = async (plan) => {
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Please login to continue',
+          position: 'bottom-end',
+          toast: true,
+          timer: 3000,
+          showConfirmButton: false
+        });
+        return;
+      }
+
+      // Create order on your backend
+      const response = await axios.post('http://localhost:8080/api/payment/create-order', {
+        plan: plan.id,
+        amount: plan.price,
+        email: userEmail
+      });
+
+      const options = {
+        key: 'rzp_test_YOUR_KEY_HERE', // Replace with your Razorpay key
+        amount: plan.price * 100, // Amount in paise
+        currency: 'INR',
+        name: 'Bug Buster',
+        description: `${plan.name} Subscription`,
+        order_id: response.data.orderId,
+        handler: async (response) => {
+          try {
+            // Verify payment on your backend
+            await axios.post('http://localhost:8080/api/payment/verify', {
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              signature: response.razorpay_signature,
+              email: userEmail,
+              plan: plan.id
+            });
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: 'Payment successful! Your account has been upgraded.',
+              position: 'bottom-end',
+              toast: true,
+              timer: 3000,
+              showConfirmButton: false
+            });
+          } catch (error) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Payment verification failed. Please contact support.',
+              position: 'bottom-end',
+              toast: true,
+              timer: 3000,
+              showConfirmButton: false
+            });
+          }
+        },
+        prefill: {
+          email: userEmail
+        },
+        theme: {
+          color: theme.palette.primary.main
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error('Payment initiation failed:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to initiate payment. Please try again.',
+        position: 'bottom-end',
+        toast: true,
+        timer: 3000,
+        showConfirmButton: false
+      });
+    }
+  };
+
   return (
     <Box sx={{ py: 8 }}>
-      {/* Hero Section */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-          color: 'white',
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 10%)`,
+          color: 'black',
           py: 8,
           mb: 8,
         }}
       >
         <Container maxWidth="lg">
-          <Typography variant="h2" component="h1" align="center" gutterBottom>
-            Upgrade Your Plan
+          <Typography variant="h3" component="h1" align="center" gutterBottom>
+            Choose Your Plan
           </Typography>
           <Typography variant="h5" align="center">
-            Choose your plan and complete your payment
+            Select the perfect plan for your needs
           </Typography>
         </Container>
       </Box>
 
       <Container maxWidth="lg">
-        <Grid container spacing={6}>
-          {/* Plan Selection */}
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5" gutterBottom>
-                  Select Your Plan
-                </Typography>
-                <FormControl component="fieldset">
-                  <RadioGroup
-                    name="plan"
-                    value={formData.plan}
-                    onChange={handleChange}
-                  >
-                    {plans.map((plan) => (
-                      <Card
-                        key={plan.id}
-                        sx={{
-                          mb: 2,
-                          border: formData.plan === plan.id ? `2px solid ${theme.palette.primary.main}` : 'none',
-                        }}
-                      >
-                        <CardContent>
-                          <FormControlLabel
-                            value={plan.id}
-                            control={<Radio />}
-                            label={
-                              <Box>
-                                <Typography variant="h6">{plan.name}</Typography>
-                                <Typography variant="h4" color="primary">
-                                  {plan.price}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                  {plan.period}
-                                </Typography>
-                                <List>
-                                  {plan.features.map((feature, index) => (
-                                    <Typography key={index} variant="body2">
-                                      • {feature}
-                                    </Typography>
-                                  ))}
-                                </List>
-                              </Box>
-                            }
-                          />
-                        </CardContent>
-                      </Card>
+        <Grid container spacing={4} justifyContent="center">
+          {plans.map((plan) => (
+            <Grid item xs={12} md={4} key={plan.id}>
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  position: 'relative',
+                  width:'350px',
+                  transition: 'transform 0.2s ease-in-out',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: 6,
+                  },
+                  ...(selectedPlan === plan.id && {
+                    border: `2px solid ${theme.palette.primary.main}`,
+                    boxShadow: 6,
+                  }),
+                }}
+              >
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography variant="h4" gutterBottom>
+                    {plan.name}
+                  </Typography>
+                  <Typography variant="h4" color="primary" gutterBottom>
+                    ₹{plan.price}
+                  </Typography>
+                  <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                    {plan.period}
+                  </Typography>
+                  <List sx={{ mb: 2 }}>
+                    {plan.features.map((feature, index) => (
+                      <Stack key={index} direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                        <Check size={20} color={theme.palette.primary.main} />
+                        <Typography variant="body1">{feature}</Typography>
+                      </Stack>
                     ))}
-                  </RadioGroup>
-                </FormControl>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Payment Form */}
-          <Grid item xs={12} md={8}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5" gutterBottom>
-                  Payment Details
-                </Typography>
-                {status.message && (
-                  <Alert severity={status.type} sx={{ mb: 2 }}>
-                    {status.message}
-                  </Alert>
-                )}
-                <form onSubmit={handleSubmit}>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Card Number"
-                        name="cardNumber"
-                        value={formData.cardNumber}
-                        onChange={handleChange}
-                        required
-                        InputProps={{
-                          startAdornment: <CreditCard sx={{ mr: 1 }} />,
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Cardholder Name"
-                        name="cardName"
-                        value={formData.cardName}
-                        onChange={handleChange}
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={6}>
-                      <TextField
-                        fullWidth
-                        label="Expiry Date"
-                        name="expiryDate"
-                        placeholder="MM/YY"
-                        value={formData.expiryDate}
-                        onChange={handleChange}
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={6}>
-                      <TextField
-                        fullWidth
-                        label="CVV"
-                        name="cvv"
-                        value={formData.cvv}
-                        onChange={handleChange}
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                        <Lock size={16} />
-                        <Typography variant="body2" color="text.secondary">
-                          Your payment information is secure and encrypted
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        size="large"
-                        fullWidth
-                        startIcon={<Shield />}
-                      >
-                        Complete Payment
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </form>
-              </CardContent>
-            </Card>
-          </Grid>
+                  </List>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    size="large"
+                    startIcon={<Shield />}
+                    onClick={() => handleCheckout(plan)}
+                    sx={{ mt: 'auto' }}
+                  >
+                    Get Started
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
       </Container>
     </Box>

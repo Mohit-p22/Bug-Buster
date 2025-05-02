@@ -191,7 +191,7 @@ const Profile = () => {
                 <Box sx={{ 
                   overflowX: 'auto',
                   overflowY: 'auto',
-                  maxHeight: '600px',
+                  maxHeight: '420px',
                   '&::-webkit-scrollbar': {
                     width: '8px',
                     height: '8px',
@@ -210,6 +210,8 @@ const Profile = () => {
                 }}>
                   <table style={{ 
                     width: '770px ', 
+                    height:'385px',
+                    overflow:'hidden',
                     borderCollapse: 'collapse',
                   }}>
                     <thead style={{ position: 'sticky', top: 0, background: 'white', color:'black',zIndex: 50 }}>

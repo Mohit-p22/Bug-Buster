@@ -13,7 +13,8 @@ import {
   CircularProgress,
   LinearProgress,
   Tabs,
-  Tab
+  Tab,
+  Tooltip
 } from '@mui/material';
 import { BarChart, PieChart } from '@mui/icons-material';
 import { LineChart } from '@mui/x-charts/LineChart';
@@ -235,7 +236,15 @@ const Dashboard = () => {
                             badgeContent={scan?.scanType || 'UNKNOWN'}
                           />
                         </td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>{scan?.bugFoundCount || 0}</td>
+                        <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
+                          {scan?.scanType === 'FULL_SCAN' ? (
+                            <Tooltip title="Total bugs across all categories">
+                              <span>{scan?.bugFoundCount || 0} bugs total</span>
+                            </Tooltip>
+                          ) : (
+                            <span>{scan?.bugFoundCount || 0} {scan?.scanType?.toLowerCase()} issues</span>
+                          )}
+                        </td>
                         <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #eee' }}>
                           <Button
                             variant="outlined"

@@ -12,7 +12,8 @@ import {
   Button,
   IconButton,
   InputAdornment,
-  CircularProgress
+  CircularProgress,
+  FormHelperText
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import axios from 'axios';
@@ -26,8 +27,43 @@ const Register = () => {
     password: '',
     confirmPassword: ''
   });
+  const [errors, setErrors] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const validateUsername = (username) => {
+    if (!username) return 'Username is required';
+    if (username.length < 3) return 'Username must be at least 3 characters long';
+    return '';
+  };
+
+  const validateEmail = (email) => {
+    if (!email) return 'Email is required';
+    const emailRegex = /^[a-zA-Z0-9][\w.-]*@[a-zA-Z0-9][\w.-]*\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) return 'Please enter a valid email address';
+    return '';
+  };
+
+  const validatePassword = (password) => {
+    if (!password) return 'Password is required';
+    if (password.length < 6) return 'Password must be at least 6 characters long';
+    if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
+    if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter';
+    if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'Password must contain at least one special character';
+    return '';
+  };
+
+  const validateConfirmPassword = (confirmPassword, password) => {
+    if (!confirmPassword) return 'Please confirm your password';
+    if (confirmPassword !== password) return 'Passwords do not match';
+    return '';
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,29 +71,60 @@ const Register = () => {
       ...prev,
       [name]: value
     }));
+
+    // Real-time validation
+    let error = '';
+    switch (name) {
+      case 'username':
+        error = validateUsername(value);
+        break;
+      case 'email':
+        error = validateEmail(value);
+        break;
+      case 'password':
+        error = validatePassword(value);
+        // Also validate confirm password when password changes
+        if (formData.confirmPassword) {
+          setErrors(prev => ({
+            ...prev,
+            confirmPassword: validateConfirmPassword(formData.confirmPassword, value)
+          }));
+        }
+        break;
+      case 'confirmPassword':
+        error = validateConfirmPassword(value, formData.password);
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    
+    // Validate all fields
+    const usernameError = validateUsername(formData.username);
+    const emailError = validateEmail(formData.email);
+    const passwordError = validatePassword(formData.password);
+    const confirmPasswordError = validateConfirmPassword(formData.confirmPassword, formData.password);
 
-    if (formData.password !== formData.confirmPassword) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Registration failed',
-        text: 'Passwords do not match',
-        position: 'bottom-end',
-        width: '400px',
-        height: '300px',
-        toast: true,
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: false
-      });
-      setIsLoading(false);
+    setErrors({
+      username: usernameError,
+      email: emailError,
+      password: passwordError,
+      confirmPassword: confirmPasswordError
+    });
+
+    // Check if there are any errors
+    if (usernameError || emailError || passwordError || confirmPasswordError) {
       return;
     }
 
+    setIsLoading(true);
     try {
       await axios.post('http://localhost:8080/api/auth/register', {
         username: formData.username,
@@ -123,6 +190,8 @@ const Register = () => {
               onChange={handleChange}
               margin="normal"
               required
+              error={!!errors.username}
+              helperText={errors.username}
               autoFocus
             />
             <TextField
@@ -134,6 +203,8 @@ const Register = () => {
               onChange={handleChange}
               margin="normal"
               required
+              error={!!errors.email}
+              helperText={errors.email}
             />
             <TextField
               fullWidth
@@ -144,6 +215,8 @@ const Register = () => {
               onChange={handleChange}
               margin="normal"
               required
+              error={!!errors.password}
+              helperText={errors.password}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -166,6 +239,8 @@ const Register = () => {
               onChange={handleChange}
               margin="normal"
               required
+              error={!!errors.confirmPassword}
+              helperText={errors.confirmPassword}
             />
             <Button
               type="submit"
@@ -173,7 +248,7 @@ const Register = () => {
               variant="contained"
               size="large"
               sx={{ mt: 3 }}
-              disabled={isLoading}
+              disabled={isLoading || Object.values(errors).some(error => error !== '')}
             >
               {isLoading ? (
                 <CircularProgress size={24} color="inherit" />
