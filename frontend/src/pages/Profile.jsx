@@ -209,9 +209,8 @@ const Profile = () => {
                   },
                 }}>
                   <table style={{ 
-                    width: '100%', 
+                    width: '770px ', 
                     borderCollapse: 'collapse',
-                    minWidth: '700px',
                   }}>
                     <thead style={{ position: 'sticky', top: 0, background: 'white', color:'black',zIndex: 50 }}>
                       <tr>
@@ -219,7 +218,7 @@ const Profile = () => {
                         <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '15%' }}>Scan Type</th>
                         <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '20%' }}>Date</th>
                         <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #eee', width: '10%' }}>Bugs</th>
-                        <th style={{ textAlign: 'right', padding: '12px', borderBottom: '2px solid #eee', width: '15%' }}>Actions</th>
+                        {/* <th style={{ textAlign: 'right', padding: '12px', borderBottom: '2px solid #eee', width: '15%' }}>Actions</th> */}
                       </tr>
                     </thead>
                     <tbody>
@@ -239,7 +238,7 @@ const Profile = () => {
                           }}>
                             {scan.urlScanned}
                           </td>
-                          <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
+                          <td style={{ padding: '12px',paddingLeft:'50px', borderBottom: '1px solid #eee' }}>
                             <Badge
                               color="primary"
                               badgeContent={scan.scanType || 'UNKNOWN'}
@@ -248,8 +247,8 @@ const Profile = () => {
                           <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>
                             {arrayToDateTime(scan?.timestamp)}
                           </td>
-                          <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>{scan.bugFoundCount}</td>
-                          <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #eee' }}>
+                          <td style={{ padding: '12px',paddingLeft:'20px', borderBottom: '1px solid #eee' }}>{scan.bugFoundCount}</td>
+                          {/* <td style={{ padding: '12px', textAlign: 'right', borderBottom: '1px solid #eee', }}>
                             <Button
                               variant="outlined"
                               size="small"
@@ -257,7 +256,7 @@ const Profile = () => {
                             >
                               View Report
                             </Button>
-                          </td>
+                          </td> */}
                         </tr>
                       ))}
                     </tbody>
