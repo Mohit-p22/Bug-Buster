@@ -224,7 +224,7 @@ const ViewReport = () => {
           </Typography>
         </Box>
        
-        console.log(totalBug)
+        
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="subtitle1" gutterBottom>

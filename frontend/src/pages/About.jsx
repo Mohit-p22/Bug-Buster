@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Box,
@@ -14,6 +14,25 @@ import { Bug, Shield, Zap, CheckCircle, Users, Target } from 'lucide-react';
 
 const About = () => {
   const theme = useTheme();
+  const [stats, setStats] = useState([
+    { number: '0', label: 'Websites Scanned' },
+    { number: '0', label: 'Bugs Detected' },
+    { number: '90%', label: 'Accuracy Rate' },
+    { number: '24/7', label: 'Support' },
+  ]);
+
+  useEffect(() => {
+    // Get values from localStorage
+    const totalScans = localStorage.getItem('totalScans') || '0';
+    const totalBugs = localStorage.getItem('totalBugs') || '0';
+
+    setStats([
+      { number: totalScans, label: 'Websites Scanned' },
+      { number: totalBugs, label: 'Bugs Detected' },
+      { number: '90%', label: 'Accuracy Rate' },
+      { number: '24/7', label: 'Support' },
+    ]);
+  }, []);
 
   const features = [
     {
@@ -42,13 +61,6 @@ const About = () => {
       title: 'Lightning Fast',
       description: 'Get detailed reports in minutes, not hours or days and .',
     },
-  ];
-
-  const stats = [
-    { number: '100+', label: 'Websites Scanned' },
-    { number: '200+', label: 'Bugs Detected' },
-    { number: '90%', label: 'Accuracy Rate' },
-    { number: '24/7', label: 'Support' },
   ];
 
   return (

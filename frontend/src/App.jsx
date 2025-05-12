@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme, Box } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import Navbar from './components/Navbar';
+import Admin from './pages/Admin';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -38,34 +39,44 @@ const theme = createTheme({
   },
 });
 
+const AppContent = () => {
+  const location = useLocation();
+  const isAdminPage = location.pathname === '/admin';
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {!isAdminPage && <Navbar />}
+      <Box component="main" sx={{ flexGrow: 1 }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/plans" element={<Plans />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/view-report/:reportId" element={<ViewReport />} />
+          <Route path="/search-report" element={<SearchReport />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/term-and-condition" element={<TermsAndConditions />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </Box>
+      {!isAdminPage && <Footer />}
+    </Box>
+  );
+};
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-          <Navbar />
-          <Box component="main" sx={{ flexGrow: 1 }}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/plans" element={<Plans />} />
-              <Route path="/payment" element={<Payment />} />
-              <Route path="/view-report/:reportId" element={<ViewReport />} />
-              <Route path="/search-report" element={<SearchReport />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/term-and-condition" element={<TermsAndConditions />} />
-              <Route path="/cookie-policy" element={<CookiePolicy />} />
-            </Routes>
-          </Box>
-          <Footer />
-        </Box>
+        <AppContent />
       </Router>
     </ThemeProvider>
   );

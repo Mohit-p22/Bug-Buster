@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  Button, 
-  Box, 
-  IconButton, 
-  Menu, 
-  MenuItem, 
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
   Avatar,
-  styled 
+  styled,
 } from '@mui/material';
 import { Bug } from 'lucide-react';
 
@@ -28,12 +28,18 @@ const NavLinks = styled(Box)(({ theme }) => ({
 const Navbar = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false); // Track if the logged-in user is an admin
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     const userEmail = localStorage.getItem('userEmail');
-    if (userEmail) {
+    const adminEmail = localStorage.getItem('adminEmail'); // Check for admin login
+
+    if (adminEmail) {
+      setIsLoggedIn(true);
+      setIsAdmin(true); // Set admin state
+    } else if (userEmail) {
       setIsLoggedIn(true);
       setUserName(userEmail.split('@')[0]);
     }
@@ -41,10 +47,17 @@ const Navbar = () => {
     // Add event listener for auth state changes
     const handleAuthStateChange = (event) => {
       if (event.detail.isLoggedIn) {
-        setIsLoggedIn(true);
-        setUserName(event.detail.email.split('@')[0]);
+        if (event.detail.isAdmin) {
+          setIsAdmin(true);
+          setIsLoggedIn(true);
+        } else {
+          setIsAdmin(false);
+          setIsLoggedIn(true);
+          setUserName(event.detail.email.split('@')[0]);
+        }
       } else {
         setIsLoggedIn(false);
+        setIsAdmin(false);
         setUserName('');
       }
     };
@@ -67,34 +80,97 @@ const Navbar = () => {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setIsAdmin(false);
     setUserName('');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('adminEmail'); // Clear admin login
     handleClose();
-    navigate('/');
+    navigate('/login'); // Redirect to login page
   };
 
   return (
-    <AppBar position="static">
+    <AppBar position="sticky">
       <StyledToolbar>
-      
-        <Typography variant="h6"  component={Link} to="/" sx={{ textDecoration: 'none', color: 'inherit' }}>
-       
-        BugBuster
+        <Typography
+          variant="h6"
+          component={Link}
+          to={isAdmin ? '/dashboard' : '/'}
+          sx={{ textDecoration: 'none', color: 'inherit' }}
+        >
+          BugBuster
         </Typography>
 
         <NavLinks>
-          <Button color="inherit" component={Link} to="/">Home</Button>
-          <Button color="inherit" component={Link} to="/services">Services</Button>
-          <Button color="inherit" component={Link} to="/about">About</Button>
+          {!isAdmin ? (
+            <>
+              <Button color="inherit" component={Link} to="/">
+                Home
+              </Button>
+              <Button color="inherit" component={Link} to="/services">
+                Services
+              </Button>
+              <Button color="inherit" component={Link} to="/about">
+                About
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button color="inherit" component={Link} to="/dashboard">
+                Dashboard
+              </Button>
+              <Button color="inherit" component={Link} to="/user-details">
+                User Details
+              </Button>
+              <Button color="inherit" component={Link} to="/bug-reports">
+                Bug Reports
+              </Button>
+            </>
+          )}
         </NavLinks>
 
         <Box>
           {!isLoggedIn ? (
             <>
-              <Button color="inherit" component={Link} to="/login">Login</Button>
-              <Button color="inherit" component={Link} to="/register">Register</Button>
+              <Button color="inherit" component={Link} to="/login">
+                Login
+              </Button>
+              <Button color="inherit" component={Link} to="/register">
+                Register
+              </Button>
+            </>
+          ) : isAdmin ? (
+            // Admin Menu
+            <>
+              <IconButton
+                size="large"
+                aria-label="admin account"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleMenu}
+                color="inherit"
+              >
+                <Avatar sx={{ bgcolor: 'secondary.main' }}>A</Avatar>
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
             </>
           ) : (
+            // User Menu
             <>
               <IconButton
                 size="large"
@@ -123,8 +199,22 @@ const Navbar = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
               >
-                <MenuItem onClick={() => { handleClose(); navigate('/profile'); }}>Profile</MenuItem>
-                <MenuItem onClick={() => { handleClose(); navigate('/dashboard'); }}>Dashboard</MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleClose();
+                    navigate('/profile');
+                  }}
+                >
+                  Profile
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleClose();
+                    navigate('/dashboard');
+                  }}
+                >
+                  Dashboard
+                </MenuItem>
                 <MenuItem onClick={handleLogout}>Logout</MenuItem>
               </Menu>
             </>

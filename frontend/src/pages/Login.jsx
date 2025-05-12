@@ -12,7 +12,11 @@ import {
   Button,
   IconButton,
   InputAdornment,
-  CircularProgress
+  CircularProgress,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import axios from 'axios';
@@ -22,14 +26,15 @@ const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
   const [errors, setErrors] = useState({
     email: '',
-    password: ''
+    password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userType, setUserType] = useState(''); // Track selected user type
 
   const validateEmail = (email) => {
     if (!email) return 'Email is required';
@@ -41,18 +46,14 @@ const Login = () => {
   const validatePassword = (password) => {
     if (!password) return 'Password is required';
     if (password.length < 6) return 'Password must be at least 6 characters long';
-    if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
-    if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter';
-    if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'Password must contain at least one special character';
     return '';
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     // Real-time validation
@@ -67,9 +68,9 @@ const Login = () => {
       default:
         break;
     }
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      [name]: error
+      [name]: error,
     }));
   };
 
@@ -82,56 +83,116 @@ const Login = () => {
 
     setErrors({
       email: emailError,
-      password: passwordError
+      password: passwordError,
     });
 
     // Check if there are any errors
-    if (emailError || passwordError) {
+    if (emailError || passwordError || !userType) {
+      if (!userType) {
+        Swal.fire({
+          icon: 'error',
+          title: '<span style="font-size: 14px;">User Type Required</span>',
+          text: 'Please select type (User or Admin)',
+          position: 'bottom-end',
+          width: '350px',
+          toast: true,
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          customClass: {
+            popup: 'swal-small-popup', 
+          },
+        });
+      }
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
-        email: formData.email,
-        password: formData.password
-      });
+      if (userType === 'admin') {
+        // Admin login validation
+        if (formData.email === 'admin123@gmail.com' && formData.password === 'admin123@') {
+          localStorage.setItem('adminEmail', formData.email);
+          Swal.fire({
+            icon: 'success',
+            title: '<span style="font-size: 14px;">Admin Login Successful</span>',
+            text: 'Welcome, Admin!',
+            position: 'bottom-end',
+            width: '280px', // Reduced width by 30%
+            toast: true,
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            customClass: {
+              popup: 'swal-small-popup', // Custom class for further styling
+            },
+          });
+          navigate('/admin'); // Redirect to admin page
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: '<span style="font-size: 14px;">Login Failed</span>',
+            text: 'Invalid admin credentials',
+            position: 'bottom-end',
+            width: '280px', // Reduced width by 30%
+            toast: true,
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            customClass: {
+              popup: 'swal-small-popup', // Custom class for further styling
+            },
+          });
+        }
+      } else {
+        // User login validation
+        const response = await axios.post('http://localhost:8080/api/auth/login', {
+          email: formData.email,
+          password: formData.password,
+        });
 
-      localStorage.setItem('userEmail', formData.email);
-      localStorage.setItem('username', response.data.username);
-      
-      // Dispatch custom event for Navbar update
-      window.dispatchEvent(new CustomEvent('authStateChanged', {
-        detail: { isLoggedIn: true, email: formData.email }
-      }));
+        localStorage.setItem('userEmail', formData.email);
+        localStorage.setItem('username', response.data.username);
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Login successful',
-        text: 'Welcome back!',
-        position: 'bottom-end',
-        width: '400px',
-        height: '300px',
-        toast: true,
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: false
-      });
+        // Dispatch custom event for Navbar update
+        window.dispatchEvent(
+          new CustomEvent('authStateChanged', {
+            detail: { isLoggedIn: true, email: formData.email },
+          })
+        );
 
-      navigate('/dashboard');
+        Swal.fire({
+          icon: 'success',
+          title: '<span style="font-size: 14px;">Login Successful</span>',
+          text: 'Welcome back!',
+          position: 'bottom-end',
+          width: '280px', // Reduced width by 30%
+          toast: true,
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          customClass: {
+            popup: 'swal-small-popup', // Custom class for further styling
+          },
+        });
+
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Login error:', error);
       Swal.fire({
         icon: 'error',
-        title: 'Login failed',
+        title: '<span style="font-size: 14px;">Login Failed</span>',
         text: 'Invalid email or password',
         position: 'bottom-end',
-        width: '400px',
-        height: '300px',
+        width: '280px', // Reduced width by 30%
         toast: true,
         timer: 3000,
         timerProgressBar: true,
-        showConfirmButton: false
+        showConfirmButton: false,
+        customClass: {
+          popup: 'swal-small-popup', // Custom class for further styling
+        },
       });
     } finally {
       setIsLoading(false);
@@ -182,29 +243,35 @@ const Login = () => {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                    >
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
             />
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel id="user-type-label">Select User Type</InputLabel>
+              <Select
+                labelId="user-type-label"
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                label="Select User Type"
+              >
+                <MenuItem value="">Select User Type</MenuItem>
+                <MenuItem value="user">User</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+              </Select>
+            </FormControl>
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
               sx={{ mt: 3 }}
-              disabled={isLoading || Object.values(errors).some(error => error !== '')}
+              disabled={isLoading || Object.values(errors).some((error) => error !== '')}
             >
-              {isLoading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Sign In'
-              )}
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
             </Button>
           </Box>
         </CardContent>

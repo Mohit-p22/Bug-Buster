@@ -146,7 +146,7 @@ const Profile = () => {
                 <Typography variant="subtitle2" color="text.secondary">Scan Limit</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography variant="body1">
-                    {( 10 - profile.user.scanLimit)} / 10  scans remain
+                    {( profile.user.scanLimit)} / 10  scans remain
                   </Typography>
                   {/* {!profile.isPremium && profile.user.scansUsed >= profile.scanLimit && (
                   )} */}
